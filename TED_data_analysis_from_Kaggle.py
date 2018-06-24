@@ -43,11 +43,12 @@ plt.axvline(x=td['views'].mean(),linestyle='--')
 plt.axvline(x=td['views'].median(),color = '#FFFF00',linestyle='-.')
 plt.legend(['mean of views','median of views'], loc='upper right')
 plt.show()
-# In[123]:
+# In[245]:
 
 
 td_view_rank = td.sort_values('views',ascending=False)
 title_rank = td_view_rank[['views','tags','title','ratings']]
+title_rank
 
 # title中有问号与观看数是否存在相关
 ques_mark = []
@@ -106,20 +107,26 @@ for t in title_rank['title']:
     t = TextBlob(t)
     title_pol.append(t.sentiment.polarity)
 title_rank['title_pol'] = title_pol
-
-c = title_rank['title_pol'].corr(title_rank['views'])
+#pol_pos=title_rank[title_rank.title_pol>0]
+#pol_neg =title_rank[title_rank.title_pol<0]
+3pol_neg.head()
+#pol_pos.head()
+#p = stats.ttest_ind(pol_neg['views'],pol_pos['views'])
+#p
+#c = pol_neg['views'].corr(pol_pos['views'])
+#print(c)
 # Result: 0.0556131305115
-fig, ax1 = plt.subplots(figsize = (10,7))
-ax1.grid(zorder=1)
-ax1.xaxis.grid(False)
-plt.hist(title_rank['title_pol'],zorder=0,color = "#000080")
+#fig, ax1 = plt.subplots(figsize = (10,7))
+#ax1.grid(zorder=1)
+#ax1.xaxis.grid(False)
+#plt.hist(title_rank['title_pol'],zorder=0,color = "#000080")
 #plt.xlabel('Views')
 #plt.ylabel('Count')
 #plt.title('TED View Distribution')
-plt.axvline(x=title_rank['title_pol'].mean(),linestyle='--')
-plt.axvline(x=title_rank['title_pol'].median(),color = '#FFFF00',linestyle='-.')
+#plt.axvline(x=title_rank['title_pol'].mean(),linestyle='--')
+#plt.axvline(x=title_rank['title_pol'].median(),color = '#FFFF00',linestyle='-.')
 #plt.legend(['mean of views','median of views'], loc='upper right')
-plt.show()# title 易懂性与views
+#plt.show()# title 易懂性与views
 title_ease = []
 for t in title_rank['title']:
     title_ease.append(textstat.flesch_reading_ease(t))
@@ -213,9 +220,47 @@ for r in title_rank['ratings']:
     #print (rat_split[i*8+5],TextBlob(rat_split[i*8+5]).sentiment.polarity*int(rat_split[i*8+8].split('}')[0].split(' ')[1]))
         sum += TextBlob(rat_split[i*8+5]).sentiment.polarity*int(rat_split[i*8+8].split('}')[0].split(' ')[1])
     rat_cal.append(sum)
-title_rank['rat_cal'] = rat_cal# ratings的情感倾向与views数量 2
+title_rank['rat_cal'] = rat_cal
+title_rank['ratings']
+# In[234]:
+
+
+
+
+# ratings的情感倾向与views数量 2
 c = title_rank['views'].corr(title_rank['rat_cal'])
 print (c)
 plt.scatter(title_rank.views, title_rank.rat_cal, alpha=0.50,color='grey')
 plt.show()
 title_rank.sort_values('rat_cal',ascending = False)
+# In[263]:
+
+
+# rating中各adj的比例与views的相关
+#adjs = [Funny,Beautiful,Ingenious,Courageous,Longwinded,
+#        Confusing,Informative,Fascinating,Unconvincing,
+#        Persuasive,Jaw_dropping,OK,Obnoxious,Inspiring]
+adjs ={'Beautiful':[],'Confusing':[],'Courageous':[],
+      'Fascinating':[],'Funny':[],'Informative':[],
+      'Ingenious':[],'Inspiring':[],'Jaw-dropping':[],
+      'Longwinded':[],'OK':[],'Obnoxious':[],
+      'Persuasive':[],'Unconvincing':[]}
+
+for text in title_rank['ratings']:
+    
+    for i in range(14):
+        adj = text.split("'")[i*8+5]
+        adj_count = text.split("'")[i*8+8]
+        adj_count_clean = int(adj_count.split("}")[0].split(" ")[1])
+        adjs[adj].append(adj_count_clean)
+
+adj_count = pd.DataFrame.from_dict(adjs)
+#adj_count['views'] = title_rank['views']
+adj_count['title'] = list(title_rank['title'])
+adj_count['views'] = list(title_rank['views'])
+adj_count
+#adj_count['title'] = views
+#title_rank = pd.merge(title_rank,adj_count)
+#result = pd.merge(left, right, on='k')
+        #print(adj,adj_count_clean,count)
+
