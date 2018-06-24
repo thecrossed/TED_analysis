@@ -22,12 +22,11 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 from scipy import stats
 from textblob import TextBlob
 from textstat.textstat import textstat
-
+import gender_guesser.detector as gender
 
 wordSyl = nltk.corpus.cmudict.dict()
 
 td = pd.read_csv('ted_main.csv')
-td.head()
 
 # Summary Statistics 
 # Tables and graphs that describe the data.1 - Histograms
@@ -43,14 +42,26 @@ plt.axvline(x=td['views'].mean(),linestyle='--')
 plt.axvline(x=td['views'].median(),color = '#FFFF00',linestyle='-.')
 plt.legend(['mean of views','median of views'], loc='upper right')
 plt.show()
-# In[245]:
+# In[2]:
 
 
 td_view_rank = td.sort_values('views',ascending=False)
-title_rank = td_view_rank[['views','tags','title','ratings']]
-title_rank
+title_rank = td_view_rank[['views','tags','title','ratings','main_speaker']]
+title_rank.head()
 
-# title中有问号与观看数是否存在相关
+# 性别比例
+gender_speaker = []
+names = []
+for name in title_rank['main_speaker']:
+    name = name.split()[0]
+    names.append(name)
+d = gender.Detector()
+for n in names:
+    gender_speaker.append(d.get_gender(n))
+title_rank['gender_speaker'] = gender_speaker
+title_rank.head(100)
+gender_count = title_rank['gender_speaker'].value_counts()
+gender_count# title中有问号与观看数是否存在相关
 ques_mark = []
 for t in title_rank['title']:
     t = word_tokenize(t)
@@ -101,6 +112,8 @@ a = title_rank['ques_start']
 b = title_rank['views']
 ques_views_ave = title_rank.groupby(['ques_start'])['views'].mean()
 c = stats.pointbiserialr(a,b)
+plt.scatter(title_rank.ques_start, title_rank.views, alpha=0.35,color='grey')
+plt.show()
 # PointbiserialrResult(correlation=0.074441732813935999, pvalue=0.00016822244638525606)# title 的中的情感倾向与views
 title_pol = []
 for t in title_rank['title']:
@@ -221,22 +234,12 @@ for r in title_rank['ratings']:
         sum += TextBlob(rat_split[i*8+5]).sentiment.polarity*int(rat_split[i*8+8].split('}')[0].split(' ')[1])
     rat_cal.append(sum)
 title_rank['rat_cal'] = rat_cal
-title_rank['ratings']
-# In[234]:
-
-
-
-
-# ratings的情感倾向与views数量 2
+title_rank['ratings']# ratings的情感倾向与views数量 2
 c = title_rank['views'].corr(title_rank['rat_cal'])
 print (c)
 plt.scatter(title_rank.views, title_rank.rat_cal, alpha=0.50,color='grey')
 plt.show()
-title_rank.sort_values('rat_cal',ascending = False)
-# In[263]:
-
-
-# rating中各adj的比例与views的相关
+title_rank.sort_values('rat_cal',ascending = False)# rating中各adj的比例与views的相关
 #adjs = [Funny,Beautiful,Ingenious,Courageous,Longwinded,
 #        Confusing,Informative,Fascinating,Unconvincing,
 #        Persuasive,Jaw_dropping,OK,Obnoxious,Inspiring]
@@ -258,9 +261,9 @@ adj_count = pd.DataFrame.from_dict(adjs)
 #adj_count['views'] = title_rank['views']
 adj_count['title'] = list(title_rank['title'])
 adj_count['views'] = list(title_rank['views'])
-adj_count
+#c = adj_count['Inspiring'].corr(adj_count['Informative'])
+
 #adj_count['title'] = views
 #title_rank = pd.merge(title_rank,adj_count)
 #result = pd.merge(left, right, on='k')
         #print(adj,adj_count_clean,count)
-
